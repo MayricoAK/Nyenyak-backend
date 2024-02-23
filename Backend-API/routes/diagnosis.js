@@ -28,7 +28,25 @@ router.get('/', (req, res) => {
   db.ref(`diagnosis/${uid}`).once('value')
     .then((snapshot) => {
       const data = snapshot.val();
-      const diagnoses = data ? Object.values(data) : [];
+      let diagnoses = [];
+
+      // Extract diagnosis objects from snapshot
+      if (data) {
+        // Convert snapshot to an array of diagnoses
+        diagnoses = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key]
+        }));
+
+        // Sort the diagnoses by date in descending order
+        diagnoses.sort((a, b) => {
+          // Parse dates in the format "DD-MM-YYYY"
+          const dateA = new Date(a.date.split('-').reverse().join('-'));
+          const dateB = new Date(b.date.split('-').reverse().join('-'));
+          return dateB - dateA;
+        });
+      }
+
       res.json(diagnoses);
     })
     .catch((error) => {
