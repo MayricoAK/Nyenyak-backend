@@ -51,7 +51,7 @@ router.get('/', (req, res) => {
     })
     .catch((error) => {
       console.error('Error fetching diagnoses:', error.message);
-      res.status(500).json({ status: 'failed', message: 'Error fetching diagnoses' });
+      res.status(500).json({ status: 'failed', message: 'Terjadi kesalahan ketika mengambil data diagnosis' });
     });
 });
 
@@ -65,17 +65,18 @@ router.get('/:id', (req, res) => {
       const diagnosis = snapshot.val();
 
       if (!diagnosis) {
-        return res.status(404).json({ status: "failed", message: 'Diagnosis not found for the logged-in user' });
+        return res.status(404).json({ status: "failed", message: 'Belum memiliki data diagnosis' });
+        // return res.status(404).json({ status: "failed", message: 'Belum memiliki data diagnosis' });
       }
 
       res.json(diagnosis);
     }, (error) => {
       console.error('Error fetching diagnosis:', error.message);
-      res.status(500).json({ status: "failed", message: 'Error fetching diagnosis' });
+      res.status(500).json({ status: "failed", message: 'Terjadi kesalahan ketika mengambil data diagnosis' });
     });
   } catch (error) {
       console.error('Exception in fetching diagnosis:', error.message);
-      res.status(500).json({ status: "failed", message: 'Exception in fetching diagnosis' });
+      res.status(500).json({ status: "failed", message: 'Tidak dapat mengambil data diagnosis' });
   }
 });
 
@@ -88,7 +89,7 @@ router.post('/', async (req, res) => {
   const userData = userSnapshot.val();
 
   if (!userData) {
-    return res.status(400).json({ message: 'ERROR: User data not found' });
+    return res.status(400).json({ message: 'Pengguna tidak dapat ditemukan' });
   }
 
   const {
@@ -110,7 +111,7 @@ router.post('/', async (req, res) => {
   } = req.body;
 
   if (!sleepDuration) {
-    return res.status(400).json({ message: 'ERROR: Please provide all required fields' });
+    return res.status(400).json({ message: 'Wajib mengisi semua bagian kosong' });
   }
 
   const heightInMeters = height / 100;
@@ -199,15 +200,15 @@ router.post('/', async (req, res) => {
 
   db.ref(`diagnosis/${uid}/${newId}`).set(newDiagnosis)
   .then(() => {
-      res.status(201).json({ status: "success", message: "Data successfully added", newDiagnosis });
+      res.status(201).json({ status: "success", message: "Data diagnosis berhasil ditambahkan", newDiagnosis });
   })
   .catch((error) => {
       console.error('Error creating diagnosis:', error.message);
-      res.status(500).json({ status: "failed", message: 'Error creating diagnosis' });
+      res.status(500).json({ status: "failed", message: 'Terjadi kesalahan ketika membuat data diagnosis' });
   });
   } catch (error) {
     console.error('Exception in creating diagnosis:', error.message);
-    res.status(500).json({ status: "failed", message: 'Exception in creating diagnosis' });
+    res.status(500).json({ status: "failed", message: 'Tidak dapat membuat data diagnosis' });
   }
 });
 
@@ -219,15 +220,15 @@ router.delete('/:id', (req, res) => {
 
     db.ref(`diagnosis/${uid}/${diagnosisId}`).remove()
       .then(() => {
-        res.status(200).json({ status: "success", message: 'Data is deleted' });
+        res.status(200).json({ status: "success", message: 'Data diagnosis telah dihapus' });
       })
       .catch((error) => {
         console.error('Error deleting diagnosis:', error.message);
-        res.status(500).json({ status: "failed", message: 'Error deleting diagnosis' });
+        res.status(500).json({ status: "failed", message: 'Terjadi kesalahan ketika menghapus data diagnosis' });
       });
   } catch (error) {
     console.error('Exception in deleting diagnosis:', error.message);
-    res.status(500).json({ status: "failed", message: 'Exception in deleting diagnosis' });
+    res.status(500).json({ status: "failed", message: 'Tidak dapat menghapus data diagnosis' });
   }
 });
 

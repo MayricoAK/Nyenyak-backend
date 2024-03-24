@@ -11,14 +11,14 @@ router.get('/', async (req, res) => {
     const articlesData = articlesSnapshot.val();
 
     if (!articlesData) {
-      return res.status(404).json({ status: "failed", message: 'No articles found' });
+      return res.status(404).json({ status: "failed", message: 'Tidak dapat menemukan data' });
     }
 
     const articles = Object.values(articlesData);
     res.json(articles);
   } catch (error) {
     console.error('Error fetching articles:', error.message);
-    res.status(500).json({ status: "failed", message: 'Error fetching articles', error: error.message });
+    res.status(500).json({ status: "failed", message: 'Tidak dapat mengambil data', error: error.message });
   }
 });
 

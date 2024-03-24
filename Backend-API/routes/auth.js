@@ -1,7 +1,7 @@
 var admin = require('firebase-admin');
 const express = require('express');
 const { auth } = require('../config');
-const { signInWithEmailAndPassword, createUserWithEmailAndPassword} = require('firebase/auth')
+const { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail} = require('firebase/auth')
 
 const router = express.Router();
 router.use(express.json());
@@ -24,8 +24,8 @@ router.post('/register', async (req, res) => {
   if (!isValidDateFormat(birthDate)) {
     return res.status(400).json({
       status: 'failed',
-      message: 'Invalid date format',
-      error: 'Date of birth must be in dd-MM-yyyy format',
+      error: 'Format Tanggal Tidak Valid',
+      message: 'Tanggal lahir harus dalam format dd-MM-yyyy'
     });
   }
 
@@ -42,7 +42,7 @@ router.post('/register', async (req, res) => {
 
     res.status(201).json({ 
       status: 'success',
-      message: 'User registered successfully', 
+      message: 'Pengguna berhasil terdaftar!', 
       userId: userRecord.user.uid,
       name,
       gender,
@@ -53,25 +53,25 @@ router.post('/register', async (req, res) => {
     if (error.code === 'auth/invalid-email') {
       res.status(400).json({ 
         status: 'failed',
-        message: 'Email must valid',
-        error: 'Email is not valid'
+        message: 'Harus menggunakan format email dengan benar',
+        error: 'Email tidak valid'
       });
     } else if (error.code === 'auth/email-already-in-use') {
       res.status(400).json({ 
         status: 'failed',
-        message: 'User is existed, login or use another email',
-        error: 'Email is used'
+        message: 'Login atau gunakan email yang telah ada',
+        error: 'Email telah digunakan'
       });
     } else if (error.code === 'auth/weak-password') {
       res.status(400).json({ 
         status: 'failed',
-        message: 'Weak Password, use valid password (at least 6 characters)',
-        error: 'Weak Password'
+        message: 'Gunakan password yang valid (minimal 6 karakter)',
+        error: 'Password lemah'
       });
     } else {
       res.status(500).json({ 
         status: 'failed',
-        message: 'Error registering user',
+        message: 'Gagal mendaftarkan pengguna',
         error: 'Server Error'
       });
     }
@@ -88,7 +88,7 @@ router.post('/login', async (req, res) => {
     const expirateTime = new Date(tokenExp).toLocaleString('en-US', { timeZone: 'Asia/Bangkok' });
     res.status(200).json({
       status: 'success',
-      message: 'Login successful',
+      message: 'Berhasil login',
       token,
       expirateTime,
     });
@@ -96,13 +96,13 @@ router.post('/login', async (req, res) => {
     if (error.code === 'auth/invalid-credential' ) {
       res.status(401).json({
         status: 'failed',
-        message: 'Email or password is incorrect',
+        message: 'Email atau password yang dimasukkan salah',
         error: 'Invalid Credential'
       });
     } else {
       res.status(500).json({
         status: 'failed',
-        message: 'Cannot login, try it again',
+        message: 'Tidak dapat melakukan login, coba lagi nanti',
         error: 'Server Error'
       });
     }
@@ -117,15 +117,36 @@ router.post('/logout', (req, res) => {
     .then(() => {
       res.status(200).json({ 
         status: 'success',
-        message: 'Logout success' });
+        message: 'Berhasil Logout' });
     })
     .catch((error) => {
       res.status(500).json({ 
         status: 'failed',
-        message: 'Error during logout', 
+        message: 'Gagal Logout', 
         error: 'Server Error'
       });
     });
+});
+
+// Route to reset password
+router.post('/resetpassword', (req, res) => {
+  const { email } = req.body;
+  sendPasswordResetEmail(auth, email)
+  .then(() => {
+    res.status(200).json({ 
+      status: 'success',
+      message: 'Email untuk melakukan reset password telah dikirim!' });
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    res.status(500).json({
+      status: 'failed',
+      message: errorMessage,
+      error: errorCode
+    });
+    // ..
+  });
 });
 
 // Route to log in with Google
@@ -140,13 +161,13 @@ router.post('/google-login', async (req, res) => {
   
       res.status(200).json({ 
         status: 'success',
-        message: 'Google login successful', 
+        message: 'Login Google berhasil', 
         token 
       });
     } catch (error) {
       res.status(401).json({ 
         status: 'failed',
-        message: 'Google login failed'
+        message: 'Login Google gagal'
       });
     }
   });
@@ -167,7 +188,7 @@ router.get('/', async (req, res) => {
     } catch (error) {
       res.status(500).json({ 
         status: 'failed', 
-        message: 'Error fetching users', 
+        message: 'Terjadi kesalahan ketika mengambil data user', 
         error: "Server Error"
       });
     }

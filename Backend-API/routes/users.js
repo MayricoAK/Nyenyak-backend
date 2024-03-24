@@ -13,13 +13,13 @@ router.get('/', async (req, res) => {
     const userData = userSnapshot.val();
 
     if (!userData) {
-      return res.status(404).json({ status: 'failed', message: 'User not found' });
+      return res.status(404).json({ status: 'failed', message: 'Tidak dapat menemukan pengguna' });
     }
 
     res.status(200).json({ status: 'success', user: userData });
   } catch (error) {
     console.error('Error fetching user data:', error.message);
-    res.status(500).json({ status: 'failed', message: 'Error fetching user data' });
+    res.status(500).json({ status: 'failed', message: 'Tidak dapat mengambil data user' });
   }
 });
 
@@ -45,8 +45,8 @@ router.put('/', async (req, res) => {
       if (!isValidDateFormat(birthDate)) {
         return res.status(400).json({
           status: 'failed',
-          message: 'Invalid date format',
-          error: 'Date of birth must be in dd-MM-yyyy format',
+          error: 'Format Tanggal Tidak Valid',
+          message: 'Tanggal lahir harus dalam format dd-MM-yyyy'
         });
       }
       newData.age = calculateAge(newData.birthDate);
@@ -54,10 +54,10 @@ router.put('/', async (req, res) => {
 
     await db.ref(`/users/${uid}`).update(newData);
 
-    res.status(200).json({ status: 'success', message: 'User data updated successfully', data: newData });
+    res.status(200).json({ status: 'success', message: 'Update data pengguna berhasil dilakukan', data: newData });
   } catch (error) {
     console.error('Error updating user data:', error.message);
-    res.status(500).json({ status: 'failed', message: 'Error updating user data' });
+    res.status(500).json({ status: 'failed', message: 'Update data pengguna gagal' });
   }
 });
 
