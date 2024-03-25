@@ -1,7 +1,7 @@
 var admin = require('firebase-admin');
 const express = require('express');
 const { auth } = require('../config');
-const { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail} = require('firebase/auth')
+const { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail} = require('firebase/auth')
 
 const router = express.Router();
 router.use(express.json());
@@ -18,6 +18,7 @@ function isValidDateFormat(dateString) {
   return isValid(parsedDate);
 }
 
+// route to register
 router.post('/register', async (req, res) => {
   const { email, password, name, gender, birthDate } = req.body;
 
@@ -94,7 +95,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     if (error.code === 'auth/invalid-credential' ) {
-      res.status(401).json({
+      res.status(400).json({
         status: 'failed',
         message: 'Email atau password yang dimasukkan salah',
         error: 'Invalid Credential'
@@ -108,7 +109,6 @@ router.post('/login', async (req, res) => {
     }
   }
 });
-
 
 // Route to log out
 router.post('/logout', (req, res) => {
@@ -129,48 +129,47 @@ router.post('/logout', (req, res) => {
 });
 
 // Route to reset password
-router.post('/resetpassword', (req, res) => {
+router.post('/reset-password', async (req, res) => {
   const { email } = req.body;
-  sendPasswordResetEmail(auth, email)
-  .then(() => {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    
+    // Password reset email sent successfully.
     res.status(200).json({ 
       status: 'success',
-      message: 'Email untuk melakukan reset password telah dikirim!' });
-  })
-  .catch((error) => {
-    const errorCode = error.code;
-    const errorMessage = error.message;
+      message: 'Email untuk melakukan reset password telah dikirim!' 
+    });
+  } catch (error) {
+    console.error("Password reset email sending failed:", error.message);
     res.status(500).json({
       status: 'failed',
-      message: errorMessage,
-      error: errorCode
+      message: 'Gagal mengirim email reset password',
+      error: error.code
     });
-    // ..
-  });
+  }
 });
 
 // Route to log in with Google
 router.post('/google-login', async (req, res) => {
-    const { idToken } = req.body;
-  
-    try {
-      const credential = admin.auth.GoogleAuthProvider.credential(idToken);
-      const userRecord = await admin.auth().signInWithCredential(credential);
-  
-      const token = await userRecord.getIdToken();
-  
-      res.status(200).json({ 
-        status: 'success',
-        message: 'Login Google berhasil', 
-        token 
-      });
-    } catch (error) {
-      res.status(401).json({ 
-        status: 'failed',
-        message: 'Login Google gagal'
-      });
-    }
-  });
+  const { idToken } = req.body;
+  try {
+    const credential = admin.auth.GoogleAuthProvider.credential(idToken);
+    const userRecord = await admin.auth().signInWithCredential(credential);
+    
+    const token = await userRecord.getIdToken();
+    
+    res.status(200).json({ 
+      status: 'success',
+      message: 'Login Google berhasil', 
+      token 
+    });
+  } catch (error) {
+    res.status(401).json({ 
+      status: 'failed',
+      message: 'Login Google gagal'
+    });
+  }
+});
 
 // Route to get all users
 router.get('/', async (req, res) => {
