@@ -51,7 +51,7 @@ router.put('/', async (req, res) => {
     const newData = req.body;
 
     if (newData.birthDate && !newData.age) {
-      if (!isValidDateFormat(birthDate)) {
+      if (!isValidDateFormat(newData.birthDate)) {
         return res.status(400).json({
           status: 'failed',
           error: 'Format Tanggal Tidak Valid',
@@ -69,11 +69,11 @@ router.put('/', async (req, res) => {
       data: newData 
     });
   } catch (error) {
-    // console.error('Error updating user data:', error.message);
+    console.error('Error updating user data:', error.message);
     res.status(500).json({ 
       status: 'failed', 
       error: 'Server Error',
-      message: 'Update data pengguna gagal' 
+      message: 'Update data pengguna gagal'
     });
   }
 });
@@ -86,7 +86,8 @@ router.post('/update-password', async (req, res) => {
     if (!newPassword) {
       return res.status(400).json({ 
         status: 'failed', 
-        message: 'Password tidak boleh kosong!' });
+        message: 'Password tidak boleh kosong!' 
+      });
     }
 
     // Check if user is authenticated
