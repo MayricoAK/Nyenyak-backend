@@ -77,7 +77,7 @@ router.post('/', async (req, res) => {
   const userData = userSnapshot.val();
 
   if (!userData) {
-    return res.status(400).json({ message: 'Pengguna tidak dapat ditemukan' });
+    return res.status(400).json({ status: "failed", message: 'Pengguna tidak dapat ditemukan' });
   }
 
   const {
@@ -99,28 +99,14 @@ router.post('/', async (req, res) => {
   } = req.body;
 
   // validasi input
-  if (
-    !isNumeric(weight) ||
-    !isNumeric(height) ||
-    !isNumeric(sleepDuration) ||
-    !isNumeric(qualityOfSleep) ||
-    !isNumeric(physicalActivityLevel) ||
-    !isNumeric(stressLevel) ||
-    !isNumeric(bloodPressure) ||
-    !isNumeric(heartRate) ||
-    !isNumeric(dailySteps)
-  ) {
-    return res.status(400).json({ message: 'Mohon pastikan semua nilai yang dimasukkan adalah angka' });
-  }
-
   if (sleepDuration > 24 || physicalActivityLevel > 24) {
-    return res.status(400).json({ message: 'Durasi yang dimasukkan tidak dapat melebihi 24 jam' });
+    return res.status(400).json({ status: "failed", message: 'Durasi yang dimasukkan tidak dapat melebihi 24 jam' });
   }
   if (sleepDuration <= 0 || physicalActivityLevel < 0 || bloodPressure <= 0 || heartRate <= 0 || dailySteps < 0) {
-    return res.status(400).json({ message: 'Pastikan semua nilai yang dimasukkan valid' });
+    return res.status(400).json({ status: "failed", message: 'Pastikan semua nilai yang dimasukkan valid' });
   }
   if (!height || !weight || !heartRate || !dailySteps ) {
-    return res.status(400).json({ message: 'Mohon isi semua data dengan benar' });
+    return res.status(400).json({ status: "failed", message: 'Data yang dimasukkan tidak boleh kosong, Mohon isi semua data dengan benar' });
   }
   
   const heightInMeters = height / 100;

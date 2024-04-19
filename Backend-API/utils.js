@@ -25,8 +25,4 @@ function getCurrentTimestamp() {
   return `${day}-${month}-${year}`;
 }
 
-function isNumeric(value) {
-  return !isNaN(parseFloat(value)) && isFinite(value);
-}
-
-module.exports = { calculateAge, isValidDateFormat, generateUniqueId, getCurrentTimestamp, isNumeric};
+module.exports = { calculateAge, isValidDateFormat, generateUniqueId, getCurrentTimestamp};
