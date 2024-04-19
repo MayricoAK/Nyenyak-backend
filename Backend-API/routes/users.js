@@ -1,6 +1,7 @@
 const express = require('express');
 var admin = require('firebase-admin');
-const { auth, db } = require('../config');
+const { db } = require('../config');
+const { calculateAge, isValidDateFormat} = require('../utils');
 
 const router = express.Router();
 router.use(express.json());
@@ -32,23 +33,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-const { differenceInYears, parse, isValid } = require('date-fns');
-function calculateAge(dateOfBirth) {
-  const dob = parse(dateOfBirth, 'dd-MM-yyyy', new Date());
-  const age = differenceInYears(new Date(), dob);
-  return age;
-}
-
-function isValidDateFormat(dateString) {
-  const parsedDate = parse(dateString, 'dd-MM-yyyy', new Date());
-  return isValid(parsedDate);
-}
-
 // Route to update user data
 router.put('/', async (req, res) => {
   try {
     const uid = req.user.uid;
     const newData = req.body;
+
+    // Retrieve user data from Realtime Database
+    const userSnapshot = await admin.database().ref(`/users/${uid}`).once('value');
+    const userData = userSnapshot.val();
 
     if (newData.birthDate && !newData.age) {
       if (!isValidDateFormat(newData.birthDate)) {
@@ -61,12 +54,40 @@ router.put('/', async (req, res) => {
       newData.age = calculateAge(newData.birthDate);
     }
 
+    // Validate and handle errors for name
+    if (!newData.name) {
+      newData.name = userData.name;
+    }
+
+    // Validate and handle errors for gender
+    if (!newData.gender) {
+      newData.gender = userData.gender;
+    }
+
+    // Validate and handle errors for birthdate
+    if (newData.birthDate == "12-12-1212") {
+      return res.status(400).json({
+        status: 'failed',
+        error: 'Invalid birthDate Value',
+        message: 'Format tanggal lahir tidak valid'
+      });
+    }
+
+    // Additional validation for gender values
+    if (newData.gender && !['male', 'female'].includes(newData.gender.toLowerCase())) {
+      return res.status(400).json({
+        status: 'failed',
+        error: 'Invalid Gender Value',
+        message: 'Format gender atau jenis kelamin tidak valid'
+      });
+    }
+
     await db.ref(`/users/${uid}`).update(newData);
 
     res.status(200).json({ 
       status: 'success', 
       message: 'Update data pengguna berhasil dilakukan', 
-      data: newData 
+      data: newData
     });
   } catch (error) {
     console.error('Error updating user data:', error.message);

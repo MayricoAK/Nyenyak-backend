@@ -1,25 +1,13 @@
 const express = require('express');
-const crypto = require('crypto');
+// const crypto = require('crypto');
 const axios = require('axios');
 const { db, verifyFirebaseToken } = require('../config');
+const { generateUniqueId, getCurrentTimestamp } = require('../utils');
 
 const router = express.Router();
 router.use(express.json());
 
 router.use(verifyFirebaseToken);
-
-function generateUniqueId(size) {
-  return crypto.randomBytes(size).toString('hex');
-}
-
-function getCurrentTimestamp() {
-  const date = new Date();
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-
-  return `${day}-${month}-${year}`;
-}
 
 // Route to get all diagnoses by logged user
 router.get('/', (req, res) => {
@@ -126,7 +114,7 @@ router.post('/', async (req, res) => {
     BMIcategory = 'Obese';
   }
 
-  const newId = generateUniqueId(8);
+  const newId = generateUniqueId();
   const createdAt = getCurrentTimestamp();
 
   const toMinute = physicalActivityLevel*60;

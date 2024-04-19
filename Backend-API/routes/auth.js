@@ -1,34 +1,15 @@
 var admin = require('firebase-admin');
 const express = require('express');
 const { auth } = require('../config');
-const { signInWithEmailAndPassword, createUserWithEmailAndPassword, updatePassword, sendPasswordResetEmail} = require('firebase/auth')
+const { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail} = require('firebase/auth');
+const { calculateAge, isValidDateFormat} = require('../utils');
 
 const router = express.Router();
 router.use(express.json());
 
-const { differenceInYears, parse, isValid } = require('date-fns');
-function calculateAge(dateOfBirth) {
-  const dob = parse(dateOfBirth, 'dd-MM-yyyy', new Date());
-  const age = differenceInYears(new Date(), dob);
-  return age;
-}
-
-function isValidDateFormat(dateString) {
-  const parsedDate = parse(dateString, 'dd-MM-yyyy', new Date());
-  return isValid(parsedDate);
-}
-
 // route to register
 router.post('/register', async (req, res) => {
   const { email, password, name, gender, birthDate } = req.body;
-
-  if (!isValidDateFormat(birthDate)) {
-    return res.status(400).json({
-      status: 'failed',
-      error: 'Format Tanggal Tidak Valid',
-      message: 'Tanggal lahir harus dalam format dd-MM-yyyy'
-    });
-  }
 
   try {
     const userRecord = await createUserWithEmailAndPassword(auth, email, password);
@@ -79,20 +60,25 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Route to log in with email and password
+// Route to login with email and password
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body; // Mengambil payload dari request
   try {
-    const userRecord = await signInWithEmailAndPassword(auth, email, password);
-    const token = await userRecord.user.getIdToken();
-    const tokenExp = userRecord.user.stsTokenManager.expirationTime;
-    const expirateTime = new Date(tokenExp).toLocaleString('en-US', { timeZone: 'Asia/Bangkok' });
+    const userRecord = await signInWithEmailAndPassword(auth, email, password); // Proses login
+    const token = await userRecord.user.getIdToken(); // token dari user yang berhasil login
+    // timestamp kadaluarsa token dan konversi ke waktu lokal
+    const tokenExp = await userRecord.user.stsTokenManager.expirationTime;
+    const expirateTime = await new Date(tokenExp).toLocaleString('en-US', { 
+      timeZone: 'Asia/Bangkok' 
+    });
+    // respon berhasil
     res.status(200).json({
       status: 'success',
       message: 'Berhasil login',
       token,
       expirateTime,
     });
+    // penanganan error
   } catch (error) {
     if (error.code === 'auth/invalid-credential' ) {
       res.status(400).json({
@@ -137,10 +123,10 @@ router.post('/reset-password', async (req, res) => {
     // Password reset email sent successfully.
     res.status(200).json({ 
       status: 'success',
-      message: 'Email untuk melakukan reset password telah dikirim!' 
+      message: 'Silahkan Cek Email Anda untuk Melakukan Reset Password!' 
     });
   } catch (error) {
-    console.error("Password reset email sending failed:", error.message);
+    // console.error("Password reset email sending failed:", error.message);
     res.status(500).json({
       status: 'failed',
       message: 'Gagal mengirim email reset password',
@@ -148,49 +134,5 @@ router.post('/reset-password', async (req, res) => {
     });
   }
 });
-
-// Route to log in with Google
-router.post('/google-login', async (req, res) => {
-  const { idToken } = req.body;
-  try {
-    const credential = admin.auth.GoogleAuthProvider.credential(idToken);
-    const userRecord = await admin.auth().signInWithCredential(credential);
-    
-    const token = await userRecord.getIdToken();
-    
-    res.status(200).json({ 
-      status: 'success',
-      message: 'Login Google berhasil', 
-      token 
-    });
-  } catch (error) {
-    res.status(401).json({ 
-      status: 'failed',
-      message: 'Login Google gagal'
-    });
-  }
-});
-
-// Route to get all users
-router.get('/', async (req, res) => {
-    try {
-      const userRecords = await admin.auth().listUsers();
-      const users = userRecords.users.map(userRecord => ({
-        uid: userRecord.uid,
-        email: userRecord.email,
-      }));
-  
-      res.status(200).json({ 
-        status: 'success', 
-        users 
-      });
-    } catch (error) {
-      res.status(500).json({ 
-        status: 'failed', 
-        message: 'Terjadi kesalahan ketika mengambil data user', 
-        error: "Server Error"
-      });
-    }
-  });
 
 module.exports = router;
