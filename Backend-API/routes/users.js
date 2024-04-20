@@ -16,19 +16,14 @@ router.get('/', async (req, res) => {
 
     if (!userData) {
       return res.status(404).json({ 
-        status: 'failed', 
-        message: 'Tidak dapat menemukan pengguna' 
+        status: 'failed', message: 'Tidak dapat menemukan pengguna' 
       });
     }
-
-    res.status(200).json({ 
-      status: 'success', 
-      user: userData });
+    res.status(200).json({ status: 'success', user: userData });
   } catch (error) {
     console.error('Error fetching user data:', error.message);
     res.status(500).json({ 
-      status: 'failed', 
-      message: 'Tidak dapat mengambil data user' 
+      status: 'failed', message: 'Tidak dapat mengambil data user' 
     });
   }
 });
@@ -46,8 +41,7 @@ router.put('/', async (req, res) => {
     if (newData.birthDate && !newData.age) {
       if (!isValidDateFormat(newData.birthDate)) {
         return res.status(400).json({
-          status: 'failed',
-          error: 'Format Tanggal Tidak Valid',
+          status: 'failed', error: 'Format Tanggal Tidak Valid',
           message: 'Tanggal lahir harus dalam format dd-MM-yyyy'
         });
       }
@@ -67,8 +61,7 @@ router.put('/', async (req, res) => {
     // Validate and handle errors for birthdate
     if (newData.birthDate == "12-12-1212") {
       return res.status(400).json({
-        status: 'failed',
-        error: 'Invalid birthDate Value',
+        status: 'failed', error: 'Invalid birthDate Value',
         message: 'Format tanggal lahir tidak valid'
       });
     }
@@ -76,8 +69,7 @@ router.put('/', async (req, res) => {
     // Additional validation for gender values
     if (newData.gender && !['male', 'female'].includes(newData.gender.toLowerCase())) {
       return res.status(400).json({
-        status: 'failed',
-        error: 'Invalid Gender Value',
+        status: 'failed', error: 'Invalid Gender Value',
         message: 'Format gender atau jenis kelamin tidak valid'
       });
     }
@@ -85,15 +77,13 @@ router.put('/', async (req, res) => {
     await db.ref(`/users/${uid}`).update(newData);
 
     res.status(200).json({ 
-      status: 'success', 
-      message: 'Update data pengguna berhasil dilakukan', 
+      status: 'success', message: 'Update data pengguna berhasil dilakukan', 
       data: newData
     });
   } catch (error) {
     console.error('Error updating user data:', error.message);
     res.status(500).json({ 
-      status: 'failed', 
-      error: 'Server Error',
+      status: 'failed', error: 'Server Error',
       message: 'Update data pengguna gagal'
     });
   }
@@ -106,16 +96,14 @@ router.post('/update-password', async (req, res) => {
     const { newPassword } = req.body; 
     if (!newPassword) {
       return res.status(400).json({ 
-        status: 'failed', 
-        message: 'Password tidak boleh kosong!' 
+        status: 'failed', message: 'Password tidak boleh kosong!' 
       });
     }
 
     // Check if user is authenticated
     if (!req.user || !req.user.uid) {
       return res.status(401).json({ 
-        status: 'failed', 
-        message: 'Unauthorized' });
+        status: 'failed', message: 'Unauthorized' });
     }
     
     const uid = req.user.uid;
@@ -126,8 +114,7 @@ router.post('/update-password', async (req, res) => {
 
     if (!userData) {
       return res.status(404).json({ 
-        status: 'failed', 
-        message: 'User not found' 
+        status: 'failed', message: 'User not found' 
       });
     }
 
@@ -137,30 +124,23 @@ router.post('/update-password', async (req, res) => {
     });
 
     res.status(200).json({
-      status: 'success',
-      message: 'Password telah berhasil diganti'
+      status: 'success', message: 'Password telah berhasil diganti'
     });
   } catch (error) {
     if (error.code === "auth/requires-recent-login") {
-      // console.error("User needs to re-authenticate first.");
       res.status(401).json({
-        status: 'failed',
-        message: 'Sesi habis, silahkan login kembali'
+        status: 'failed', message: 'Sesi habis, silahkan login kembali'
       });
     } else if (error.code === "auth/weak-password") {
-      // console.error("Password must be stronger.");
       res.status(400).json({
-        status: 'failed',
-        message: 'Gunakan password yang valid (minimal 6 karakter)',
-        error: 'Password Lemah'
+        status: 'failed', error: 'Password Lemah',
+        message: 'Gunakan password yang valid (minimal 6 karakter)'
       });
     } else {
       res.status(500).json({
-        status: 'failed',
-        error: 'Server Error',
+        status: 'failed', error: 'Server Error',
         message: 'Password tidak dapat diganti'
       });
-      // console.error("Password update failed:", error.message);
     }
   }
 });

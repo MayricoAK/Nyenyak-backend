@@ -7,53 +7,44 @@ const { calculateAge, isValidDateFormat} = require('../utils');
 const router = express.Router();
 router.use(express.json());
 
-// route to register
+// route untuk melakukan registrasi pengguna
 router.post('/register', async (req, res) => {
   const { email, password, name, gender, birthDate } = req.body;
 
   try {
-    const userRecord = await createUserWithEmailAndPassword(auth, email, password);
-    const age = calculateAge(birthDate)
+    // Membuat pengguna dengan email dan password
+    const userRecord = await createUserWithEmailAndPassword(auth, email, password); 
+    const age = calculateAge(birthDate) // Menghitung usia berdasarkan tanggal lahir
+     // Menyimpan detail pengguna ke Realtime Database
     await admin.database().ref(`/users/${userRecord.user.uid}`).set({
-      name,
-      email,
-      gender,
-      birthDate,
-      age
+      name, email, gender, birthDate, age
     });
-
+    // Memberikan respons berhasil
     res.status(201).json({ 
-      status: 'success',
-      message: 'Pengguna berhasil terdaftar!', 
-      userId: userRecord.user.uid,
-      name,
-      gender,
-      birthDate,
-      age
+      status: 'success', message: 'Pengguna berhasil terdaftar!', 
+      userId: userRecord.user.uid, name, gender, birthDate, age
     });
+    
   } catch (error) {
+    // Penanganan error
     if (error.code === 'auth/invalid-email') {
       res.status(400).json({ 
-        status: 'failed',
-        message: 'Harus menggunakan format email dengan benar',
+        status: 'failed', message: 'Harus menggunakan format email dengan benar',
         error: 'Email tidak valid'
       });
     } else if (error.code === 'auth/email-already-in-use') {
       res.status(400).json({ 
-        status: 'failed',
-        message: 'Login atau gunakan email yang telah ada',
+        status: 'failed', message: 'Login atau gunakan email yang telah ada',
         error: 'Email telah digunakan'
       });
     } else if (error.code === 'auth/weak-password') {
       res.status(400).json({ 
-        status: 'failed',
-        message: 'Gunakan password yang valid (minimal 6 karakter)',
+        status: 'failed', message: 'Gunakan password yang valid (minimal 6 karakter)',
         error: 'Password lemah'
       });
     } else {
       res.status(500).json({ 
-        status: 'failed',
-        message: 'Gagal mendaftarkan pengguna',
+        status: 'failed', message: 'Gagal mendaftarkan pengguna',
         error: 'Server Error'
       });
     }
@@ -73,8 +64,7 @@ router.post('/login', async (req, res) => {
     });
     // respon berhasil
     res.status(200).json({
-      status: 'success',
-      message: 'Berhasil login',
+      status: 'success', message: 'Berhasil login',
       token,
       expirateTime,
     });
@@ -82,14 +72,12 @@ router.post('/login', async (req, res) => {
   } catch (error) {
     if (error.code === 'auth/invalid-credential' ) {
       res.status(400).json({
-        status: 'failed',
-        message: 'Email atau password yang dimasukkan salah',
+        status: 'failed', message: 'Email atau password yang dimasukkan salah',
         error: 'Invalid Credential'
       });
     } else {
       res.status(500).json({
-        status: 'failed',
-        message: 'Tidak dapat melakukan login, coba lagi nanti',
+        status: 'failed', message: 'Tidak dapat melakukan login, coba lagi nanti',
         error: 'Server Error'
       });
     }
@@ -102,13 +90,11 @@ router.post('/logout', (req, res) => {
   auth.signOut()
     .then(() => {
       res.status(200).json({ 
-        status: 'success',
-        message: 'Berhasil Logout' });
+        status: 'success', message: 'Berhasil Logout' });
     })
     .catch((error) => {
       res.status(500).json({ 
-        status: 'failed',
-        message: 'Gagal Logout', 
+        status: 'failed', message: 'Gagal Logout', 
         error: 'Server Error'
       });
     });
@@ -122,14 +108,11 @@ router.post('/reset-password', async (req, res) => {
     
     // Password reset email sent successfully.
     res.status(200).json({ 
-      status: 'success',
-      message: 'Silahkan Cek Email Anda untuk Melakukan Reset Password!' 
+      status: 'success', message: 'Silahkan Cek Email Anda untuk Melakukan Reset Password!' 
     });
   } catch (error) {
-    // console.error("Password reset email sending failed:", error.message);
     res.status(500).json({
-      status: 'failed',
-      message: 'Gagal mengirim email reset password',
+      status: 'failed', message: 'Gagal mengirim email reset password',
       error: error.code
     });
   }

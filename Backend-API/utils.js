@@ -24,5 +24,70 @@ function getCurrentTimestamp() {
   
   return `${day}-${month}-${year}`;
 }
+function calculateBMI(height, weight){
+  const heightInMeters = height / 100;
+  const BMI = weight / (heightInMeters ** 2);
+  let BMIcategory;
+    if (BMI < 25) {
+      return BMIcategory = 'Normal';
+    } else if (BMI < 30) {
+      return BMIcategory = 'Overweight';
+    } else {
+      return BMIcategory = 'Obese';
+    }
+}
 
-module.exports = { calculateAge, isValidDateFormat, generateUniqueId, getCurrentTimestamp};
+function convertBMI(BMIcategory) {
+  let category = 0;
+  if (BMIcategory === 'Obese') {
+    category = 1;
+  } else if (BMIcategory === 'Overweight') {
+    category = 2;
+  }
+
+  return category;
+}
+
+
+// Menghitung Sleep Quality
+function calculateSleepQuality(qualityOfSleep) {
+  if (qualityOfSleep >= 4 && qualityOfSleep <= 9) {
+    return qualityOfSleep - 4;
+  } else if (qualityOfSleep < 4) {
+    return 0;
+  } else {
+    return 5;
+  }
+}
+
+// Menghitung Stress Level
+function calculateStressLevel(stressLevel) {
+  if (stressLevel >= 3 && stressLevel <= 8) {
+    return stressLevel - 3;
+  } else if (stressLevel < 3) {
+    return 0;
+  } else {
+    return 5;
+  }
+}
+
+// Menghitung BP Category
+function calculateBpCategory(bloodPressure) {
+  switch (bloodPressure) {
+    case 'Normal':
+      return 1;
+    case 'Stage 1':
+      return 2;
+    case 'Stage 2':
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+function isValidDiagnosisId(id) {
+  // Implement your validation logic here
+  return typeof id === 'string' && id.trim().length > 0;
+}
+
+module.exports = { isValidDiagnosisId, calculateAge, isValidDateFormat, generateUniqueId, getCurrentTimestamp, calculateBMI, convertBMI, calculateSleepQuality,calculateStressLevel,calculateBpCategory };
