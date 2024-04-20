@@ -1,29 +1,37 @@
 const express = require('express');
 var admin = require('firebase-admin');
 const { db } = require('../config');
-const { calculateAge, isValidDateFormat} = require('../utils');
+const { calculateAge, isValidDateFormat, isValidGender} = require('../utils');
 
 const router = express.Router();
 router.use(express.json());
 
-// Route to get user data by UID
+// Mendapatkan detail dari data pengguna
 router.get('/', async (req, res) => {
   try {
     const uid = req.user.uid;
 
+    // Retrieve user data from Realtime Database
     const userSnapshot = await db.ref(`/users/${uid}`).once('value');
     const userData = userSnapshot.val();
 
+    // Pengecekan apakah data pengguna ditemukan
     if (!userData) {
       return res.status(404).json({ 
-        status: 'failed', message: 'Tidak dapat menemukan pengguna' 
+        status: 'failed', 
+        message: 'Pengguna tidak ditemukan' 
       });
     }
-    res.status(200).json({ status: 'success', user: userData });
+
+    // Respon
+    res.status(200).json({ 
+      status: 'success', 
+      user: userData 
+    });
   } catch (error) {
-    console.error('Error fetching user data:', error.message);
     res.status(500).json({ 
-      status: 'failed', message: 'Tidak dapat mengambil data user' 
+      status: 'failed', 
+      message: 'Gagal mengambil data pengguna' 
     });
   }
 });
@@ -38,6 +46,7 @@ router.put('/', async (req, res) => {
     const userSnapshot = await admin.database().ref(`/users/${uid}`).once('value');
     const userData = userSnapshot.val();
 
+    // Proses update age jika birthDate valid dan age tidak disediakan
     if (newData.birthDate && !newData.age) {
       if (!isValidDateFormat(newData.birthDate)) {
         return res.status(400).json({
@@ -48,17 +57,11 @@ router.put('/', async (req, res) => {
       newData.age = calculateAge(newData.birthDate);
     }
 
-    // Validate and handle errors for name
-    if (!newData.name) {
-      newData.name = userData.name;
-    }
+    // Set nilai default jika variabel nama dan gender kosong
+    newData.name = newData.name || userData.name;
+    newData.gender = newData.gender || userData.gender;
 
-    // Validate and handle errors for gender
-    if (!newData.gender) {
-      newData.gender = userData.gender;
-    }
-
-    // Validate and handle errors for birthdate
+    // Validasi untuk birthdate, "12-12-1212" adalah nilai birthDate default dari aplikasi
     if (newData.birthDate == "12-12-1212") {
       return res.status(400).json({
         status: 'failed', error: 'Invalid birthDate Value',
@@ -66,22 +69,22 @@ router.put('/', async (req, res) => {
       });
     }
 
-    // Additional validation for gender values
-    if (newData.gender && !['male', 'female'].includes(newData.gender.toLowerCase())) {
+    // Validasi nilai gender
+    if (newData.gender && !isValidGender(newData.gender)) {
       return res.status(400).json({
         status: 'failed', error: 'Invalid Gender Value',
-        message: 'Format gender atau jenis kelamin tidak valid'
+        message: 'Format gender atau jenis kelamin yang dimasukkan harus valid'
       });
     }
 
-    await db.ref(`/users/${uid}`).update(newData);
+    await db.ref(`/users/${uid}`).update(newData); // Proses update data pengguna
 
+    // Respon
     res.status(200).json({ 
       status: 'success', message: 'Update data pengguna berhasil dilakukan', 
       data: newData
     });
   } catch (error) {
-    console.error('Error updating user data:', error.message);
     res.status(500).json({ 
       status: 'failed', error: 'Server Error',
       message: 'Update data pengguna gagal'
@@ -89,10 +92,11 @@ router.put('/', async (req, res) => {
   }
 });
 
+
 // Route to update password
 router.post('/update-password', async (req, res) => {
   try {
-    // Check if newPassword is provided in the request body
+    // Validasi
     const { newPassword } = req.body; 
     if (!newPassword) {
       return res.status(400).json({ 
@@ -100,48 +104,40 @@ router.post('/update-password', async (req, res) => {
       });
     }
 
-    // Check if user is authenticated
-    if (!req.user || !req.user.uid) {
-      return res.status(401).json({ 
-        status: 'failed', message: 'Unauthorized' });
-    }
-    
+    // Pengecekan user
     const uid = req.user.uid;
-    
-    // Retrieve user data from Realtime Database
-    const userSnapshot = await admin.database().ref(`/users/${uid}`).once('value');
-    const userData = userSnapshot.val();
-
-    if (!userData) {
-      return res.status(404).json({ 
-        status: 'failed', message: 'User not found' 
+    if (!uid) {
+      return res.status(401).json({ 
+        status: 'failed', message: 'Unauthorized' 
       });
     }
 
-    // Update password using Firebase Authentication API
+    // Proses update
     await admin.auth().updateUser(uid, {
       password: newPassword
     });
 
+    // Respon
     res.status(200).json({
-      status: 'success', message: 'Password telah berhasil diganti'
+      status: 'success', message: 'Password berhasil diganti'
     });
   } catch (error) {
     if (error.code === "auth/requires-recent-login") {
-      res.status(401).json({
-        status: 'failed', message: 'Sesi habis, silahkan login kembali'
+      return res.status(401).json({
+        status: 'failed', message: 'Sesi habis, silakan login kembali'
       });
     } else if (error.code === "auth/weak-password") {
-      res.status(400).json({
+      return res.status(400).json({
         status: 'failed', error: 'Password Lemah',
-        message: 'Gunakan password yang valid (minimal 6 karakter)'
-      });
-    } else {
-      res.status(500).json({
-        status: 'failed', error: 'Server Error',
-        message: 'Password tidak dapat diganti'
+        message: 'Gunakan password yang lebih kuat (minimal 6 karakter)'
       });
     }
+
+    // Tangani kesalahan server atau kesalahan lainnya
+    return res.status(500).json({
+      status: 'failed', error: 'Server Error',
+      message: 'Gagal mengganti password'
+    });
   }
 });
 

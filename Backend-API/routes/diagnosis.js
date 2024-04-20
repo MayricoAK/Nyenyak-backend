@@ -11,59 +11,54 @@ router.use(express.json());
 
 router.use(verifyFirebaseToken);
 
-// Route to get all diagnoses by logged user
-router.get('/', (req, res) => {
-  const uid = req.user.uid;
+// Mendapatkan diagnosis pada pengguna
+router.get('/', async (req, res) => {
+  try {
+    const uid = req.user.uid;
 
-  db.ref(`diagnosis/${uid}`).once('value')
-    .then((snapshot) => {
-      const data = snapshot.val();
-      let diagnoses = [];
+    // Mengambil data diagnosis dari database
+    const snapshot = await db.ref(`diagnosis/${uid}`).once('value');
+    const data = snapshot.val();
 
-      // Extract diagnosis objects from snapshot
-      if (data) {
-        // Convert snapshot to an array of diagnoses
-        diagnoses = Object.keys(data).map(key => ({
-          id: key,
-          ...data[key]
-        }));
+    // Memasukkan data dari database ke array map
+    let diagnoses = Object.keys(data).map(key => ({
+      id: key,
+      ...data[key]
+    }));
 
-        // Sort the diagnoses by date in descending order
-        diagnoses.sort((a, b) => {
-          // Parse dates in the format "DD-MM-YYYY"
-          const dateA = new Date(a.date.split('-').reverse().join('-'));
-          const dateB = new Date(b.date.split('-').reverse().join('-'));
-          return dateB - dateA;
-        });
-      }
-
-      res.json(diagnoses);
-    })
-    .catch((error) => {
-      console.error('Error fetching diagnoses:', error.message);
-      res.status(500).json({ status: 'failed', message: 'Terjadi kesalahan ketika mengambil data diagnosis' });
+    // Sorting diagnosis by date in Descending order
+    diagnoses.sort((a, b) => {
+      const dateA = new Date(a.date.split('-').reverse().join('-'));
+      const dateB = new Date(b.date.split('-').reverse().join('-'));
+      return dateB - dateA;
     });
+
+    // Mengubah diagnosis yang sudah sorting menjadi respon JSON
+    res.json(diagnoses);
+  } catch (error) {
+    res.status(500).json({ status: 'failed', message: 'Terjadi kesalahan ketika mengambil data diagnosis' });
+  }
 });
 
 // Route to get a specific diagnosis by ID for the logged-in user
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const diagnosisId = req.params.id;
     const uid = req.user.uid;
 
-    db.ref(`diagnosis/${uid}/${diagnosisId}`).once('value', (snapshot) => {
-      const diagnosis = snapshot.val();
+    // Retrieve diagnosis data from Firebase
+    const snapshot = await db.ref(`diagnosis/${uid}/${diagnosisId}`).once('value');
+    const diagnosis = snapshot.val();
 
-      if (!diagnosis) {
-        return res.status(404).json({ status: "failed", message: 'Belum memiliki data diagnosis' });
-      }
+    if (!diagnosis) {
+      // Diagnosis not found for the user
+      return res.status(404).json({ status: "failed", message: 'Data diagnosis tidak ditemukan' });
+    }
 
-      res.json(diagnosis);
-    }, (error) => {
-      res.status(500).json({ status: "failed", message: 'Terjadi kesalahan ketika mengambil data diagnosis' });
-    });
+    // Send diagnosis data as JSON response
+    res.json(diagnosis);
   } catch (error) {
-      res.status(500).json({ status: "failed", message: 'Tidak dapat mengambil data diagnosis' });
+    res.status(500).json({ status: "failed", message: 'Terjadi kesalahan ketika mengambil data diagnosis' });
   }
 });
 

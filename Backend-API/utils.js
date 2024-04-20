@@ -48,7 +48,6 @@ function convertBMI(BMIcategory) {
   return category;
 }
 
-
 // Menghitung Sleep Quality
 function calculateSleepQuality(qualityOfSleep) {
   if (qualityOfSleep >= 4 && qualityOfSleep <= 9) {
@@ -90,4 +89,8 @@ function isValidDiagnosisId(id) {
   return typeof id === 'string' && id.trim().length > 0;
 }
 
-module.exports = { isValidDiagnosisId, calculateAge, isValidDateFormat, generateUniqueId, getCurrentTimestamp, calculateBMI, convertBMI, calculateSleepQuality,calculateStressLevel,calculateBpCategory };
+function isValidGender(gender) {
+  return ['male', 'female'].includes(gender.toLowerCase());
+}
+
+module.exports = { isValidGender, isValidDiagnosisId, calculateAge, isValidDateFormat, generateUniqueId, getCurrentTimestamp, calculateBMI, convertBMI, calculateSleepQuality,calculateStressLevel,calculateBpCategory };
