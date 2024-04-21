@@ -2,7 +2,7 @@ var admin = require('firebase-admin');
 const express = require('express');
 const { auth } = require('../config');
 const { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail} = require('firebase/auth');
-const { calculateAge, isValidDateFormat} = require('../utils');
+const { calculateAge, isValidDateFormat, isValidGender, } = require('../utils');
 
 const router = express.Router();
 router.use(express.json());
@@ -11,10 +11,28 @@ router.use(express.json());
 router.post('/register', async (req, res) => {
   const { email, password, name, gender, birthDate } = req.body;
 
+  // Validasi gender (harus 'male' atau 'female')
+  if (!isValidGender(gender)) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Harap pilih jenis kelamin yang valid (male, atau female)',
+      error: 'Jenis kelamin tidak valid'
+    });
+  }
+
+  // Validasi birthDate (format tanggal yang valid)
+  if (!isValidDateFormat(birthDate)) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Harap masukkan tanggal lahir yang valid (format: DD-MM-YYYY)',
+      error: 'Tanggal lahir tidak valid'
+    });
+  }
+
   try {
     // Membuat pengguna dengan email dan password
     const userRecord = await createUserWithEmailAndPassword(auth, email, password); 
-    const age = calculateAge(birthDate) // Menghitung usia berdasarkan tanggal lahir
+    const age = calculateAge(birthDate); // Menghitung usia berdasarkan tanggal lahir
      // Menyimpan detail pengguna ke Realtime Database
     await admin.database().ref(`/users/${userRecord.user.uid}`).set({
       name, email, gender, birthDate, age
