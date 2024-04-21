@@ -40,22 +40,22 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Route to get a specific diagnosis by ID for the logged-in user
+// Mendapatkan detail dari satu diagnosis
 router.get('/:id', async (req, res) => {
   try {
-    const diagnosisId = req.params.id;
-    const uid = req.user.uid;
+    const diagnosisId = req.params.id; // Mendapatkan ID diagnosis dari parameter URL
+    const uid = req.user.uid; // Mendapatkan UID
 
-    // Retrieve diagnosis data from Firebase
+    // Mengambil data diagnosis dari Firebase Realtime Database
     const snapshot = await db.ref(`diagnosis/${uid}/${diagnosisId}`).once('value');
-    const diagnosis = snapshot.val();
+    const diagnosis = snapshot.val(); // Mendapatkan nilai data diagnosis dari snapshot
 
     if (!diagnosis) {
-      // Diagnosis not found for the user
+      // Jika data diagnosis tidak ditemukan untuk pengguna yang sedang masuk
       return res.status(404).json({ status: "failed", message: 'Data diagnosis tidak ditemukan' });
     }
 
-    // Send diagnosis data as JSON response
+    // Respons
     res.json(diagnosis);
   } catch (error) {
     res.status(500).json({ status: "failed", message: 'Terjadi kesalahan ketika mengambil data diagnosis' });
@@ -168,20 +168,21 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Route to delete a diagnosis by ID
+// menghapus diagnosis berdasarkan ID
 router.delete('/:id', async (req, res) => {
   try {
-    const diagnosisId = req.params.id;
-    const uid = req.user.uid;
+    const diagnosisId = req.params.id; // Mendapatkan diagnosisId dari parameter URL
+    const uid = req.user.uid; // Mendapatkan UID (User ID) dari pengguna yang sedang masuk
 
-    // Cek diagnosis
+    // Validasi diagnosis
     if (!isValidDiagnosisId(diagnosisId)) {
       return res.status(400).json({ status: "failed", message: 'Invalid diagnosis ID' });
     }
 
-    await db.ref(`diagnosis/${uid}/${diagnosisId}`).remove(); // proses hapus
+    // Proses penghapusan diagnosis dari Firebase Realtime Database
+    await db.ref(`diagnosis/${uid}/${diagnosisId}`).remove();
 
-    // Respon
+    // Mengirim respons
     res.status(200).json({ status: "success", message: 'Data diagnosis telah dihapus' });
   } catch (error) {
     res.status(500).json({ status: "failed", message: 'Terjadi kesalahan ketika menghapus data diagnosis' });
