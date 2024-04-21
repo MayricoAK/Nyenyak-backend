@@ -10,6 +10,14 @@ router.use(express.json());
 // route untuk melakukan registrasi pengguna
 router.post('/register', async (req, res) => {
   const { email, password, name, gender, birthDate } = req.body;
+  // validasi input
+  if (!email || !password || !name || !gender || !birthDate) {
+    return res.status(400).json({
+      status: 'failed',
+      message: 'Semua kolom input harus diisi',
+      error: 'Input tidak boleh kosong'
+    });
+  }
 
   // Validasi gender (harus 'male' atau 'female')
   if (!isValidGender(gender)) {
