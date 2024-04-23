@@ -13,11 +13,7 @@ Before setting up Nyenyak-backend, ensure that you have the following prerequisi
 Before getting started, make sure to install the required dependencies using npm:
 
 ```
-npm install express
-npm install firebase
-npm install firebase-admin@latest
-npm install axios
-npm install date-fns
+npm install 
 ```
 
 ## 2. Set Up Firebase Service Account
