@@ -1,5 +1,6 @@
 const { differenceInYears, parse, isValid } = require('date-fns');
 const crypto = require('crypto');
+const { DateTime } = require('luxon');
 
 function calculateAge(dateOfBirth) {
   const dob = parse(dateOfBirth, 'dd-MM-yyyy', new Date());
@@ -17,13 +18,16 @@ function generateUniqueId(size = 8) {
 }
   
 function getCurrentTimestamp() {
-  const date = new Date();
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+  const now = DateTime.now().setZone('Asia/Bangkok');
   
-  return `${day}-${month}-${year}`;
+  const year = now.year;
+  const month = now.month.toString().padStart(2, '0');
+  const day = now.day.toString().padStart(2, '0');
+  
+  const formattedDate = `${day}-${month}-${year}`;
+  return formattedDate;
 }
+
 function calculateBMI(height, weight){
   const heightInMeters = height / 100;
   const BMI = weight / (heightInMeters ** 2);

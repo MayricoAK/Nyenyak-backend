@@ -90,6 +90,10 @@ router.post('/', async (req, res) => {
     } = req.body;
 
     // Validasi input:
+    // - Semua input harus diisi
+    if (!height || !weight || !heartRate || !dailySteps ) {
+      return res.status(400).json({ status: "failed", message: 'Data yang dimasukkan tidak boleh kosong, Mohon isi semua data dengan benar' });
+    }
     // - Durasi tidur dan aktivitas fisik tidak boleh lebih dari 24 jam
     if (sleepDuration > 24 || physicalActivityLevel > 24) {
       return res.status(400).json({ status: "failed", message: 'Durasi yang dimasukkan tidak dapat melebihi 24 jam' });
@@ -98,17 +102,13 @@ router.post('/', async (req, res) => {
     if (sleepDuration <= 0 || physicalActivityLevel < 0 || bloodPressure <= 0 || heartRate <= 0 || dailySteps < 0) {
       return res.status(400).json({ status: "failed", message: 'Pastikan semua nilai yang dimasukkan valid' });
     }
-    // - Semua input harus diisi
-    if (!height || !weight || !heartRate || !dailySteps ) {
-      return res.status(400).json({ status: "failed", message: 'Data yang dimasukkan tidak boleh kosong, Mohon isi semua data dengan benar' });
-    }
 
     // Menghitung BMI (Body Mass Index) berdasarkan berat dan tinggi
     const BMIcategory = calculateBMI(height, weight);
 
     // Membuat ID dan timestamp baru untuk diagnosis
     const newId = generateUniqueId();
-    const createdAt = getCurrentTimestamp();
+    const createdAt = await getCurrentTimestamp();
 
     // Mengonversi level aktivitas fisik dari jam menjadi menit
     const toMinute = physicalActivityLevel * 60;
